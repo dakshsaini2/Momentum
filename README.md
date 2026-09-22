@@ -1,6 +1,14 @@
 <div align="center">
   <h1>🚀 Momentum</h1>
   <p><strong>Intelligent Todo & Productivity Operating System</strong></p>
+  
+  <p>
+    <a href="https://github.com/dakshsaini2/Momentum/stargazers"><img src="https://img.shields.io/github/stars/dakshsaini2/Momentum?style=for-the-badge&logo=github&color=FFB000" alt="GitHub Stars" /></a>
+    <a href="https://github.com/dakshsaini2/Momentum/network/members"><img src="https://img.shields.io/github/forks/dakshsaini2/Momentum?style=for-the-badge&logo=github&color=333333" alt="GitHub Forks" /></a>
+    <a href="https://github.com/dakshsaini2/Momentum/issues"><img src="https://img.shields.io/github/issues/dakshsaini2/Momentum?style=for-the-badge&logo=github&color=E13C3C" alt="GitHub Issues" /></a>
+    <a href="https://github.com/dakshsaini2/Momentum/blob/main/LICENSE"><img src="https://img.shields.io/github/license/dakshsaini2/Momentum?style=for-the-badge&logo=opensourceinitiative&color=4CAF50" alt="License" /></a>
+  </p>
+
   <p>
     <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
     <img src="https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white" alt="NodeJS" />
@@ -14,6 +22,17 @@
 </div>
 
 Momentum is a full-stack, production-quality productivity platform designed to answer the core question: **"What should I work on right now, and why?"**
+
+## 📑 Table of Contents
+
+- [⚡ 1-Command Docker Quick Start](#-1-command-docker-quick-start)
+- [🌟 Key Features](#-key-features)
+- [🏗️ Architecture & Stack](#️-architecture--stack)
+- [🛠️ Local Development (without Docker)](#️-local-development-without-docker)
+- [🧪 Testing](#-testing)
+- [🤝 Contributing](#-contributing)
+- [👨‍💻 Author](#-author)
+- [📄 License](#-license)
 
 ---
 
@@ -102,3 +121,30 @@ npm run dev
 cd my-api
 npm test
 ```
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!  
+Feel free to check out the [issues page](https://github.com/dakshsaini2/Momentum/issues).
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 👨‍💻 Author
+
+**Daksh Saini**
+
+- GitHub: [@dakshsaini2](https://github.com/dakshsaini2)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
