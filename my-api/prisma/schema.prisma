@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum EnergyLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum BlockedReason {
+  WAITING_FOR_PERSON
+  WAITING_FOR_API
+  TECHNICAL_ISSUE
+  NEED_INFORMATION
+  DEPENDENCY
+  OTHER
+}
+
+enum FocusFeedback {
+  EASY
+  NORMAL
+  DIFFICULT
+  BLOCKED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String
+  avatar        String?
+  role          Role           @default(USER)
+  timezone      String         @default("UTC")
+  xp            Int            @default(0)
+  level         Int            @default(1)
+  streak        Int            @default(0)
+  lastActiveAt  DateTime       @default(now()) @map("last_active_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  refreshTokens RefreshToken[]
+  projects      Project[]
+  tasks         Task[]
+  focusSessions FocusSession[]
+  dailyPlans    DailyPlan[]
+  dailyReviews  DailyReview[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+  tags          Tag[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model RefreshToken {
+  id          String   @id @default(cuid())
+  hashedToken String   @unique @map("hashed_token")
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked     Boolean  @default(false)
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([hashedToken])
+  @@map("refresh_tokens")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String   @default("#6366f1")
+  icon        String   @default("folder")
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tasks       Task[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model Task {
+  id               String         @id @default(cuid())
+  title            String
+  description      String?
+  status           TaskStatus     @default(TODO)
+  priority         Priority       @default(MEDIUM)
+  energyLevel      EnergyLevel    @default(MEDIUM)
+  dueDate          DateTime?
+  estimatedMinutes Int            @default(30)
+  actualMinutes    Int            @default(0)
+  progress         Int            @default(0)
+  blockedReason    BlockedReason?
+  blockedNote      String?
+  
+  userId           String         @map("user_id")
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  projectId        String?        @map("project_id")
+  project          Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  
+  parentTaskId     String?        @map("parent_task_id")
+  parentTask       Task?          @relation("Subtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks         Task[]         @relation("Subtasks")
+
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  completedAt      DateTime?
+
+  tags             TaskTag[]
+  focusSessions    FocusSession[]
+  
+  dependencies     TaskDependency[] @relation("TaskDependencies")
+  dependents       TaskDependency[] @relation("TaskDependents")
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String
+  color     String    @default("#10b981")
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     TaskTag[]
+
+  @@unique([userId, name])
+  @@map("tags")
+}
+
+model TaskTag {
+  taskId String @map("task_id")
+  tagId  String @map("tag_id")
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@map("task_tags")
+}
+
+model TaskDependency {
+  taskId      String @map("task_id")
+  dependsOnId String @map("depends_on_id")
+  task        Task   @relation("TaskDependencies", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOn   Task   @relation("TaskDependents", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, dependsOnId])
+  @@map("task_dependencies")
+}
+
+model FocusSession {
+  id        String         @id @default(cuid())
+  userId    String         @map("user_id")
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String?        @map("task_id")
+  task      Task?          @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  startedAt DateTime       @default(now()) @map("started_at")
+  endedAt   DateTime?      @map("ended_at")
+  duration  Int            // in seconds
+  completed Boolean        @default(true)
+  feedback  FocusFeedback?
+
+  @@index([userId])
+  @@map("focus_sessions")
+}
+
+model DailyPlan {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  schedule  Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, date])
+  @@map("daily_plans")
+}
+
+model DailyReview {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime
+  completedCount Int      @map("completed_count")
+  totalCount     Int      @map("total_count")
+  focusTime      Int      @map("focus_time") // in minutes
+  biggestWin     String?  @map("biggest_win")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, date])
+  @@map("daily_reviews")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // DEADLINE, OVERDUE, NEGLECTED, BLOCKED, REVIEW
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("activity_logs")
+}
