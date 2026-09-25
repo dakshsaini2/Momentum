@@ -70,10 +70,13 @@ export const submitDailyReview = asyncHandler(async (req: AuthenticatedRequest, 
   const tomorrow = new Date(todayDate.getTime() + 24 * 60 * 60 * 1000);
 
   // Fetch today stats
-  const allTasks = await prisma.task.findMany({ where: { userId } });
-  const completedToday = allTasks.filter(
-    (t) => t.completedAt && new Date(t.completedAt).toDateString() === now.toDateString()
-  ).length;
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+  const [totalCount, completedCount] = await Promise.all([
+    prisma.task.count({ where: { userId } }),
+    prisma.task.count({ where: { userId, completedAt: { gte: dayStart, lte: dayEnd } } })
+  ]);
 
   const focusSessions = await prisma.focusSession.findMany({
     where: { userId, startedAt: { gte: todayDate } },
@@ -84,8 +87,8 @@ export const submitDailyReview = asyncHandler(async (req: AuthenticatedRequest, 
   const review = await prisma.dailyReview.upsert({
     where: { userId_date: { userId, date: todayDate } },
     update: {
-      completedCount: completedToday,
-      totalCount: allTasks.length,
+      completedCount: completedCount,
+      totalCount: totalCount,
       focusTime: focusMinutes,
       biggestWin: biggestWin || null,
       notes: notes || null,
@@ -93,8 +96,8 @@ export const submitDailyReview = asyncHandler(async (req: AuthenticatedRequest, 
     create: {
       userId,
       date: todayDate,
-      completedCount: completedToday,
-      totalCount: allTasks.length,
+      completedCount: completedCount,
+      totalCount: totalCount,
       focusTime: focusMinutes,
       biggestWin: biggestWin || null,
       notes: notes || null,

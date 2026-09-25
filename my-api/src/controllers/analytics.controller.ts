@@ -11,7 +11,7 @@ export const getAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: 
 
   // Past 7 Days dates
   const past7Days: string[] = [];
-  const trendData: { date: string; completed: number; created: number }[] = [];
+  const trendDataPromises: Promise<{ date: string; completed: number; created: number }>[] = [];
 
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
@@ -21,22 +21,15 @@ export const getAnalytics = asyncHandler(async (req: AuthenticatedRequest, res: 
     const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
 
-    const completed = await prisma.task.count({
-      where: {
-        userId,
-        completedAt: { gte: dayStart, lte: dayEnd },
-      },
-    });
-
-    const created = await prisma.task.count({
-      where: {
-        userId,
-        createdAt: { gte: dayStart, lte: dayEnd },
-      },
-    });
-
-    trendData.push({ date: dateStr, completed, created });
+    trendDataPromises.push(
+      Promise.all([
+        prisma.task.count({ where: { userId, completedAt: { gte: dayStart, lte: dayEnd } } }),
+        prisma.task.count({ where: { userId, createdAt: { gte: dayStart, lte: dayEnd } } })
+      ]).then(([completed, created]) => ({ date: dateStr, completed, created }))
+    );
   }
+
+  const trendData = await Promise.all(trendDataPromises);
 
   // Focus time weekly distribution
   const focusSessions = await prisma.focusSession.findMany({

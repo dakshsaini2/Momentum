@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { asyncHandler, sendSuccess } from "@devsaini2300/backend-core";
+import type { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { authService } from "../services/auth.service";
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
@@ -31,7 +32,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const me = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.id;
+  const userId = (req as AuthenticatedRequest).user!.id;
   const result = await authService.getMe(userId);
   sendSuccess(res, result);
 });

@@ -15,8 +15,8 @@ export const TodayPage: React.FC = () => {
     try {
       setIsLoading(true);
       const res = await api.get("/tasks");
-      if (res.data?.data) {
-        setTasks(res.data.data);
+      if (res.data?.data?.tasks) {
+        setTasks(res.data.data.tasks);
       }
     } catch (e) {
       console.error(e);

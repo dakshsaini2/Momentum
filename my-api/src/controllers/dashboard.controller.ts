@@ -20,9 +20,12 @@ export const getDashboardSummary = asyncHandler(async (req: AuthenticatedRequest
     select: { id: true, name: true, xp: true, level: true, streak: true },
   });
 
-  // 2. Fetch Tasks
-  const allTasks = await prisma.task.findMany({
-    where: { userId },
+  // 2. Fetch Active Tasks for Recommendations and Lists
+  const activeTasks = await prisma.task.findMany({
+    where: { 
+      userId,
+      status: { notIn: [TaskStatus.COMPLETED, TaskStatus.ARCHIVED] }
+    },
     include: {
       project: true,
       subtasks: true,
@@ -32,28 +35,26 @@ export const getDashboardSummary = asyncHandler(async (req: AuthenticatedRequest
     orderBy: { createdAt: "desc" },
   });
 
-  // 3. Fetch Today's Focus Sessions
+  // 3. Fetch Today's Focus Sessions & Stats
   const focusSessionsToday = await prisma.focusSession.findMany({
-    where: {
-      userId,
-      startedAt: { gte: startOfDay },
-      completed: true,
-    },
+    where: { userId, startedAt: { gte: startOfDay }, completed: true },
   });
 
   const totalFocusSecondsToday = focusSessionsToday.reduce((acc, s) => acc + s.duration, 0);
   const focusMinutesToday = Math.round(totalFocusSecondsToday / 60);
 
-  // Today's completion stats
-  const tasksDueToday = allTasks.filter(
-    (t) => t.dueDate && new Date(t.dueDate).toDateString() === now.toDateString()
-  );
+  const tomorrow = new Date(startOfDay.getTime() + 86400000);
+  
+  const [completedToday, tasksDueTodayCount] = await Promise.all([
+    prisma.task.count({
+      where: { userId, completedAt: { gte: startOfDay } }
+    }),
+    prisma.task.count({
+      where: { userId, dueDate: { gte: startOfDay, lt: tomorrow } }
+    })
+  ]);
 
-  const completedToday = allTasks.filter(
-    (t) => t.completedAt && new Date(t.completedAt).toDateString() === now.toDateString()
-  ).length;
-
-  const totalTodayCount = Math.max(tasksDueToday.length, completedToday, 1);
+  const totalTodayCount = Math.max(tasksDueTodayCount, completedToday, 1);
   const progressPercent = Math.min(100, Math.round((completedToday / totalTodayCount) * 100));
 
   // 4. Calculate Overall Momentum Score
@@ -65,19 +66,19 @@ export const getDashboardSummary = asyncHandler(async (req: AuthenticatedRequest
   });
 
   // 5. "What's Next?" Recommendation
-  const recommendation = RecommendationService.recommendNextTask(allTasks, energyMode);
+  const recommendation = RecommendationService.recommendNextTask(activeTasks, energyMode);
 
   // 6. Needs Attention (Overdue, Blocked, Neglected)
-  const overdueTasks = allTasks.filter(
-    (t) => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.ARCHIVED && t.dueDate && new Date(t.dueDate) < startOfDay
+  const overdueTasks = activeTasks.filter(
+    (t) => t.dueDate && new Date(t.dueDate) < startOfDay
   );
 
-  const blockedTasks = allTasks.filter(
+  const blockedTasks = activeTasks.filter(
     (t) => t.status === TaskStatus.BLOCKED
   );
 
   const threeDaysAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
-  const neglectedTasks = allTasks.filter(
+  const neglectedTasks = activeTasks.filter(
     (t) =>
       t.status === TaskStatus.TODO &&
       new Date(t.updatedAt) < threeDaysAgo &&
@@ -85,10 +86,8 @@ export const getDashboardSummary = asyncHandler(async (req: AuthenticatedRequest
   );
 
   // 7. Quick Wins (<= 15 minutes)
-  const quickWins = allTasks.filter(
+  const quickWins = activeTasks.filter(
     (t) =>
-      t.status !== TaskStatus.COMPLETED &&
-      t.status !== TaskStatus.ARCHIVED &&
       t.status !== TaskStatus.BLOCKED &&
       t.estimatedMinutes <= 15
   );

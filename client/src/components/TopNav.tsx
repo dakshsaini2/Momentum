@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Plus, Bell, Zap, BatteryCharging, Leaf, Check } from "lucide-react";
 import { useCommandStore } from "../stores/useCommandStore";
 import { useFocusStore } from "../stores/useFocusStore";
@@ -12,6 +12,19 @@ export const TopNav: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  // Close notification dropdown when clicking outside
+  useEffect(() => {
+    if (!isNotifOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isNotifOpen]);
 
   useEffect(() => {
     const fetchNotifs = async () => {
@@ -94,7 +107,7 @@ export const TopNav: React.FC = () => {
         </button>
 
         {/* Notifications Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={notifRef}>
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
             className="p-1.5 rounded-[7px] bg-white border border-[#E6E8EC] text-[#667085] hover:text-[#172033] hover:bg-[#F7F8FA] transition-colors relative"

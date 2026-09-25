@@ -20,7 +20,10 @@ export const LoginPage: React.FC = () => {
       setError("");
       const res = await api.post("/auth/login", { email, password });
       if (res.data?.data) {
-        setAuth(res.data.data.user, res.data.data.tokens.accessToken);
+        const { user, accessToken, refreshToken } = res.data.data;
+        if (accessToken) localStorage.setItem("momentum_access_token", accessToken);
+        if (refreshToken) localStorage.setItem("momentum_refresh_token", refreshToken);
+        setAuth(user, accessToken);
         navigate("/");
       }
     } catch (err: any) {

@@ -25,7 +25,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     localStorage.removeItem("momentum_access_token");
+    localStorage.removeItem("momentum_refresh_token");
+    localStorage.removeItem("momentum_demo_userId");
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+    window.location.href = "/login";
   },
 
   fetchMe: async () => {
@@ -36,16 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ user: res.data.data, isAuthenticated: true, isLoading: false });
       }
     } catch (e) {
-      // Fallback demo user for immediate seamless experience
-      try {
-        const demoRes = await api.get("/dashboard");
-        if (demoRes.data?.data?.user) {
-          set({ user: demoRes.data.data.user, isAuthenticated: true, isLoading: false });
-          return;
-        }
-      } catch (err) {
-        set({ user: null, isAuthenticated: false, isLoading: false });
-      }
+      set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 }));

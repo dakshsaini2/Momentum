@@ -22,7 +22,7 @@ export const CommandPalette: React.FC = () => {
           api.get("/tasks"),
           api.get("/projects"),
         ]);
-        if (taskRes.data?.data) setTasks(taskRes.data.data);
+        if (taskRes.data?.data?.tasks) setTasks(taskRes.data.data.tasks);
         if (projRes.data?.data) setProjects(projRes.data.data);
       } catch (e) {
         // silent
@@ -73,7 +73,7 @@ export const CommandPalette: React.FC = () => {
                     key={p.id}
                     onClick={() => {
                       closeSearch();
-                      navigate(`/projects/${p.id}`);
+                      navigate('/projects');
                     }}
                     className="flex items-center gap-2.5 px-2.5 py-2 rounded-[6px] hover:bg-[#F7F8FA] cursor-pointer text-xs font-medium text-[#172033] transition-colors"
                   >

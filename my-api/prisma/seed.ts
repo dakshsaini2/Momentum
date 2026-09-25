@@ -24,6 +24,7 @@ async function main() {
   const hashedPassword = await hashPassword("Password123!");
   const user = await prisma.user.create({
     data: {
+      id: "clx_seed_user_id",
       name: "Alex Vance",
       email: "demo@momentum.app",
       password: hashedPassword,

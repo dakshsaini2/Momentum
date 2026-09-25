@@ -12,8 +12,11 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   } else {
-    // In development mode, fallback to seed demo user
-    config.headers["x-demo-user-id"] = localStorage.getItem("momentum_demo_userId") || "clx_seed_user_id";
+    // In development mode, fallback to seed demo user only if explicitly set
+    const demoUserId = localStorage.getItem("momentum_demo_userId");
+    if (demoUserId) {
+      config.headers["x-demo-user-id"] = demoUserId;
+    }
   }
   return config;
 });

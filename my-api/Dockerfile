@@ -29,12 +29,9 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src ./src
 COPY docker-entrypoint.sh ./
 
-RUN chmod +x docker-entrypoint.sh && \
-    chown -R appuser:appgroup /app
+RUN chmod +x docker-entrypoint.sh
 
 ENV NODE_ENV=production
-
-USER appuser
 
 EXPOSE 5000
 

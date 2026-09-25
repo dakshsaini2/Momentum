@@ -2,12 +2,9 @@
 set -e
 
 echo "⏳ Running database migrations..."
-npx prisma migrate deploy 2>/dev/null || npx prisma db push
+npx prisma db push --accept-data-loss
 echo "🌱 Seeding initial demo data..."
-npx tsx prisma/seed.ts
-if [ $? -ne 0 ]; then
-  echo "⚠️ Seed script failed (non-fatal, continuing...)"
-fi
+npx tsx prisma/seed.ts || echo "⚠️ Seed script failed (non-fatal, continuing...)"
 
 echo "🚀 Starting Momentum API Server..."
 exec node dist/server.js

@@ -20,7 +20,7 @@ export const PlannerPage: React.FC = () => {
         api.get("/tasks"),
       ]);
       if (planRes.data?.data) setPlan(planRes.data.data);
-      if (taskRes.data?.data) setTasks(taskRes.data.data);
+      if (taskRes.data?.data?.tasks) setTasks(taskRes.data.data.tasks);
     } catch (e) {
       console.error(e);
     }
